@@ -13,14 +13,14 @@ const usd, eur, rub = "USD", "EUR", "RUB"
 func inputFunc() (string, float64, string) {
 	var money float64
 	var firstVal, secondVal string
-	fmt.Println("Введите валюту которую хотите конвертировать(EUR, USD, RYB)")
+	fmt.Println("Введите валюту которую хотите конвертировать(EUR, USD, RUB)")
 	for {
 		_, err := fmt.Scan(&firstVal)
 		firstVal = strings.ToUpper(firstVal)
 		if err != nil {
 			fmt.Println("Ошибка ввода")
 		} else if firstVal != usd && firstVal != eur && firstVal != rub {
-			fmt.Println("Ошибка, еще раз введите валюту которую хотите конвертировать(EUR, USD, RYB)")
+			fmt.Println("Ошибка, еще раз введите валюту которую хотите конвертировать(EUR, USD, RUB)")
 		} else {
 			break
 		}
@@ -37,19 +37,19 @@ func inputFunc() (string, float64, string) {
 			break
 		}
 	}
-	fmt.Println("Введите валюту  в которую хотите перевести(EUR, USD, RYB)")
+	fmt.Println("Введите валюту  в которую хотите перевести(EUR, USD, RUB)")
 	for {
 		_, err := fmt.Scan(&secondVal)
 		secondVal = strings.ToUpper(secondVal)
 		if err != nil {
 			fmt.Println("Ошибка ввода")
 		} else if secondVal != usd && secondVal != eur && secondVal != rub {
-			fmt.Println("Ошибка, еще раз введите валюту которую хотите конвертировать(EUR, USD, RYB)")
+			fmt.Println("Ошибка, еще раз введите валюту которую хотите конвертировать(EUR, USD, RUB)")
 		} else {
 			break
 		}
 	}
-	return strings.ToUpper(firstVal), money, strings.ToUpper(secondVal)
+	return firstVal, money, secondVal
 }
 
 func converter(firstVal, secondVal string, money float64) string {
@@ -57,23 +57,23 @@ func converter(firstVal, secondVal string, money float64) string {
 	var result string
 	switch {
 	case firstVal == rub && secondVal == usd:
-		result = fmt.Sprintf("%.f рублей это %.2f долларах \n", money, money/usdTorub)
+		result = fmt.Sprintf("%2.f рублей это %.2f долларах \n", money, money/usdTorub)
 	case firstVal == rub && secondVal == eur:
-		result = fmt.Sprintf("%.f рублей это %.2f евро\n", money, money/usdTorub*usdToeur)
+		result = fmt.Sprintf("%2.f рублей это %.2f евро\n", money, money/usdTorub*usdToeur)
 	case firstVal == usd && secondVal == rub:
-		result = fmt.Sprintf("%.f долларов это %.2f рублей\n", money, money*usdTorub)
+		result = fmt.Sprintf("%2.f долларов это %.2f рублей\n", money, money*usdTorub)
 	case firstVal == usd && secondVal == eur:
-		result = fmt.Sprintf("%.f долларов это %.2f евро\n", money, money*usdToeur)
+		result = fmt.Sprintf("%2.f долларов это %.2f евро\n", money, money*usdToeur)
 	case firstVal == eur && secondVal == rub:
-		result = fmt.Sprintf("%.f евро это %.2f рублей\n", money, money/usdToeur*usdTorub)
+		result = fmt.Sprintf("%2.f евро это %.2f рублей\n", money, money/usdToeur*usdTorub)
 	case firstVal == eur && secondVal == usd:
-		result = fmt.Sprintf("%.f евро это %.2f долларов\n", money, money/usdToeur)
+		result = fmt.Sprintf("%2.f евро это %.2f долларов\n", money, money/usdToeur)
 	case firstVal == eur && secondVal == eur:
-		result = fmt.Sprintf("%.f евро это %.2f евро\n", money, money)
+		result = fmt.Sprintf("%2.f евро это %.2f евро\n", money, money)
 	case firstVal == usd && secondVal == usd:
-		result = fmt.Sprintf("%.f долларов это %.2f долларов\n", money, money)
+		result = fmt.Sprintf("%2.f долларов это %.2f долларов\n", money, money)
 	case firstVal == rub && secondVal == rub:
-		result = fmt.Sprintf("%.f рублей это %.2f рублей\n", money, money)
+		result = fmt.Sprintf("%2.f рублей это %.2f рублей\n", money, money)
 	}
 	return result
 }
