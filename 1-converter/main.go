@@ -60,9 +60,26 @@ func valConv(currencies map[string]float64, val *string){
 	}
 }
 func converter(firstVal, secondVal string, money float64, currencies map[string]float64) string {
-
 	var result string
-	sum := money*currencies[secondVal]/currencies[firstVal]
-	result = fmt.Sprintf("%.2f %s это %.2f в %s \n", money, firstVal, sum, secondVal )
+	switch {
+	case firstVal == rub && secondVal == usd:
+		result = fmt.Sprintf("%2.f рублей это %.2f долларах \n", money, money/usdTorub)
+	case firstVal == rub && secondVal == eur:
+		result = fmt.Sprintf("%2.f рублей это %.2f евро\n", money, money/usdTorub*usdToeur)
+	case firstVal == usd && secondVal == rub:
+		result = fmt.Sprintf("%2.f долларов это %.2f рублей\n", money, money*usdTorub)
+	case firstVal == usd && secondVal == eur:
+		result = fmt.Sprintf("%2.f долларов это %.2f евро\n", money, money*usdToeur)
+	case firstVal == eur && secondVal == rub:
+		result = fmt.Sprintf("%2.f евро это %.2f рублей\n", money, money/usdToeur*usdTorub)
+	case firstVal == eur && secondVal == usd:
+		result = fmt.Sprintf("%2.f евро это %.2f долларов\n", money, money/usdToeur)
+	case firstVal == eur && secondVal == eur:
+		result = fmt.Sprintf("%2.f евро это %.2f евро\n", money, money)
+	case firstVal == usd && secondVal == usd:
+		result = fmt.Sprintf("%2.f долларов это %.2f долларов\n", money, money)
+	case firstVal == rub && secondVal == rub:
+		result = fmt.Sprintf("%2.f рублей это %.2f рублей\n", money, money)
+	}
 	return result
 }

@@ -9,29 +9,30 @@ import (
 )
 
 func main() {
-	var operation int
+	var operation string
 	var str string
 
 	for {
-		fmt.Println("Что вы хотите вычислить? (1.AVG - среднее 2. SUM - сумму 3. MED - медиану 4.Выход)\n Введите номер:")
+		fmt.Println("Что вы хотите вычислить? (1.AVG - среднее 2. SUM - сумму 3. MED - медиану 4.n - Выход)\n Введите (AVG/MED/SUM/n):")
 		fmt.Scan(&operation)
-		if operation != 1 && operation != 2 && operation != 3 && operation != 4 {
+		operation = strings.ToUpper(operation)
+		if operation != "AVG" && operation != "SUM" && operation != "MED" && operation != "N" {
 			fmt.Println("Неверная операция.")
 			continue
-		} else if operation == 4 {
+		} else if operation == "N" {
 			break
 		}
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Print("Введите числа через запятую: ")
 		str, _ = reader.ReadString('\n')
 		resPrint(&operation, str)
-		if operation == 4 {
+		if operation == "N" {
 			break
 		}
 	}
 }
 
-func resPrint(operation *int, str string) {
+func resPrint(operation *string, str string) {
 	var numArr []float64
 	var err error
 	if numArr, err = convStr(str); err != nil {
@@ -39,15 +40,16 @@ func resPrint(operation *int, str string) {
 		return
 	}
 	switch *operation {
-	case 1:
+	case "AVG":
 		fmt.Println("Среднее:", avg(numArr))
-	case 2:
+	case "SUM":
 		fmt.Println("Сумма:", sum(numArr))
-	case 3:
+	case "MED":
 		fmt.Println("Медиана:", med(numArr))
 	}
-	fmt.Println("Продолжить? 0 - да, 4 - выход")
+	fmt.Println("Продолжить? y/n")
 	fmt.Scan(operation)
+	*operation = strings.ToUpper(*operation)
 }
 func convStr(str string) ([]float64, error) {
 	str = strings.TrimSpace(str)
