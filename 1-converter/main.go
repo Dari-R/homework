@@ -4,47 +4,50 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 )
 
-var currencies = map[string]float64{
-	"USD": 1.0,
-	"RUB": 79.74,
-	"EUR": 0.88,
-}
-
-var operations = map[string]func(float64, string, string) string{
-	"CONVERT": func(amount float64, from, to string) string {
-		fromRate, fromOk := currencies[strings.ToUpper(from)]
-		toRate, toOk := currencies[strings.ToUpper(to)]
-		if !fromOk || !toOk {
-			return "Ошибка: Неверная валюта. Доступны только EUR, USD, RUB."
-		}
-		converted := amount * toRate / fromRate
-		return fmt.Sprintf("%.2f %s это %.2f в %s", amount, strings.ToUpper(from), converted, strings.ToUpper(to))
-	},
-}
-
 func main() {
-	if len(os.Args) != 4 {
-		fmt.Println("Использование: go run main.go <из_валюты> <сумма> <в_валюту>")
-		os.Exit(1)
+	if len(os.Args) < 4 {
+		fmt.Println("Использование: go run main.go <FROM> <TO> <AMOUNT>")
+		return
 	}
 
 	from := os.Args[1]
-	amountStr := os.Args[2]
-	to := os.Args[3]
+	to := os.Args[2]
+	amountStr := os.Args[3]
 
 	amount, err := strconv.ParseFloat(amountStr, 64)
 	if err != nil {
-		fmt.Println("Ошибка: сумма должна быть числом")
-		os.Exit(1)
+		fmt.Println("Ошибка: некорректная сумма.")
+		return
 	}
 
-	op := "CONVERT"
-	if operation, ok := operations[op]; ok {
-		fmt.Println(operation(amount, from, to))
-	} else {
-		fmt.Println("Ошибка: операция не поддерживается")
+	currencies := map[string]float64{
+		"USD": 1.0,
+		"EUR": 0.93,
+		"JPY": 151.67,
+		"GBP": 0.79,
+		"CNY": 7.25,
 	}
+
+	result, err := convert(from, to, amount, &currencies)
+	if err != nil {
+		fmt.Println("Ошибка:", err)
+		return
+	}
+
+	fmt.Printf("%.2f %s = %.2f %s\n", amount, from, result, to)
+}
+
+func convert(from, to string, amount float64, rates *map[string]float64) (float64, error) {
+	fromRate, ok := (*rates)[from]
+	if !ok {
+		return 0, fmt.Errorf("неизвестная валюта: %s", from)
+	}
+	toRate, ok := (*rates)[to]
+	if !ok {
+		return 0, fmt.Errorf("неизвестная валюта: %s", to)
+	}
+	usdAmount := amount / fromRate
+	return usdAmount * toRate, nil
 }
