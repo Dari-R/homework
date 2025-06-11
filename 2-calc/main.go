@@ -80,7 +80,7 @@ func avg(numArr []float64) float64 {
 func med(numArr []float64) float64 {
 	var num, mediana float64
 	if len(numArr) % 2 == 0{
-		mediana = avg(numArr)
+		mediana = (numArr[len(numArr)/2-1]+numArr[len(numArr)/2]) /2
 		return mediana
 	}
 	for i := 0; i < len(numArr); i++ {
