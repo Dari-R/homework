@@ -1,99 +1,71 @@
 package main
 
 import (
-	"bufio"
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 )
 
 func main() {
-	var operation string
-	var str string
-
-	for {
-		fmt.Println("Что вы хотите вычислить? (1.AVG - среднее 2. SUM - сумму 3. MED - медиану 4.n - Выход)\n Введите (AVG/MED/SUM/n):")
-		fmt.Scan(&operation)
-		operation = strings.ToUpper(operation)
-		if operation != "AVG" && operation != "SUM" && operation != "MED" && operation != "N" {
-			fmt.Println("Неверная операция.")
-			continue
-		} else if operation == "N" {
-			break
-		}
-		reader := bufio.NewReader(os.Stdin)
-		fmt.Print("Введите числа через запятую: ")
-		str, _ = reader.ReadString('\n')
-		resPrint(&operation, str)
-		if operation == "N" {
-			break
-		}
-	}
-}
-
-func resPrint(operation *string, str string) {
-	var numArr []float64
-	var err error
-	if numArr, err = convStr(str); err != nil {
-		fmt.Println(err)
+	if len(os.Args) < 3 {
+		fmt.Println("Пример использования: go run main.go AVG 2,10,9")
 		return
 	}
-	switch *operation {
-	case "AVG":
-		fmt.Println("Среднее:", avg(numArr))
-	case "SUM":
-		fmt.Println("Сумма:", sum(numArr))
-	case "MED":
-		fmt.Println("Медиана:", med(numArr))
-	}
-	fmt.Println("Продолжить? y/n")
-	fmt.Scan(operation)
-	*operation = strings.ToUpper(*operation)
-}
-func convStr(str string) ([]float64, error) {
-	str = strings.TrimSpace(str)
-	str = strings.ReplaceAll(str, " ", "")
-	parts := strings.Split(str, ",")
 
-	numArr := make([]float64, len(parts))
-	for i, val := range parts {
-		num, err := strconv.ParseFloat(val, 64)
+	op := strings.ToUpper(os.Args[1])
+	rawNumbers := strings.Split(os.Args[2], ",")
+	var numbers []float64
+
+	for _, s := range rawNumbers {
+		num, err := strconv.ParseFloat(strings.TrimSpace(s), 64)
 		if err != nil {
-			return nil, fmt.Errorf("ошибка преобразования: %v", err)
+			fmt.Printf("Ошибка преобразования числа: %v\n", err)
+			return
 		}
-		numArr[i] = num
+		numbers = append(numbers, num)
 	}
-	return numArr, nil
-}
-func sum(numArr []float64) float64 {
-	var sum float64
-	for i := 0; i < len(numArr); i++ {
-		sum += numArr[i]
+
+	operations := map[string]func([]float64) float64{
+		"SUM": sum,
+		"AVG": avg,
+		"MED": med,
 	}
-	return sum
+
+	fn, ok := operations[op]
+	if !ok {
+		fmt.Println("Операция не поддерживается. Используйте: SUM, AVG или MED.")
+		return
+	}
+
+	result := fn(numbers)
+	fmt.Printf("Результат %s: %.2f\n", op, result)
 }
 
-func avg(numArr []float64) float64 {
-	avg := sum(numArr) / float64(len(numArr))
-	return avg
+func sum(nums []float64) float64 {
+	var total float64
+	for _, n := range nums {
+		total += n
+	}
+	return total
 }
 
-func med(numArr []float64) float64 {
-	var num, mediana float64
+func avg(nums []float64) float64 {
+	if len(nums) == 0 {
+		return 0
+	}
+	return sum(nums) / float64(len(nums))
+}
 
-	for i := 0; i < len(numArr); i++ {
-		for j := 0; j < len(numArr)-i-1; j++ {
-			if numArr[j+1] < numArr[j] {
-				num = numArr[j]
-				numArr[j] = numArr[j+1]
-				numArr[j+1] = num
-			}
-		}
+func med(nums []float64) float64 {
+	if len(nums) == 0 {
+		return 0
 	}
-	if len(numArr)%2 == 0 {
-		mediana = (numArr[len(numArr)/2-1] + numArr[len(numArr)/2]) / 2
-		return mediana
+	sort.Float64s(nums)
+	n := len(nums)
+	if n%2 == 0 {
+		return (nums[n/2-1] + nums[n/2]) / 2
 	}
-	return numArr[len(numArr)/2]
+	return nums[n/2]
 }
