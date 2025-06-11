@@ -2,92 +2,52 @@ package main
 
 import (
 	"fmt"
+	"os"
 	"strconv"
-	"strings"
 )
 
-const usdTorub = 79.74
-const usdToeur = 0.88
-const usd, eur, rub = "USD", "EUR", "RUB"
-
-func inputFunc() (string, float64, string) {
-	var money float64
-	var firstVal, secondVal string
-	fmt.Println("Введите валюту которую хотите конвертировать(EUR, USD, RUB)")
-	for {
-		_, err := fmt.Scan(&firstVal)
-		firstVal = strings.ToUpper(firstVal)
-		if err != nil {
-			fmt.Println("Ошибка ввода")
-		} else if firstVal != usd && firstVal != eur && firstVal != rub {
-			fmt.Println("Ошибка, еще раз введите валюту которую хотите конвертировать(EUR, USD, RUB)")
-		} else {
-			break
-		}
-	}
-	fmt.Println("Отлично! Введите сумму:")
-	var checkMoney string
-	var err error
-	for {
-		fmt.Scan(&checkMoney)
-		money, err = strconv.ParseFloat(checkMoney, 64)
-		if err != nil {
-			fmt.Println("Неккоректный ввод, введите сумму еще раз")
-		} else {
-			break
-		}
-	}
-	fmt.Println("Введите валюту  в которую хотите перевести(EUR, USD, RUB)")
-	for {
-		_, err := fmt.Scan(&secondVal)
-		secondVal = strings.ToUpper(secondVal)
-		if err != nil {
-			fmt.Println("Ошибка ввода")
-		} else if secondVal != usd && secondVal != eur && secondVal != rub {
-			fmt.Println("Ошибка, еще раз введите валюту которую хотите конвертировать(EUR, USD, RUB)")
-		} else {
-			break
-		}
-	}
-	return firstVal, money, secondVal
-}
-
-func converter(firstVal, secondVal string, money float64) string {
-
-	var result string
-	switch {
-	case firstVal == rub && secondVal == usd:
-		result = fmt.Sprintf("%2.f рублей это %.2f долларах \n", money, money/usdTorub)
-	case firstVal == rub && secondVal == eur:
-		result = fmt.Sprintf("%2.f рублей это %.2f евро\n", money, money/usdTorub*usdToeur)
-	case firstVal == usd && secondVal == rub:
-		result = fmt.Sprintf("%2.f долларов это %.2f рублей\n", money, money*usdTorub)
-	case firstVal == usd && secondVal == eur:
-		result = fmt.Sprintf("%2.f долларов это %.2f евро\n", money, money*usdToeur)
-	case firstVal == eur && secondVal == rub:
-		result = fmt.Sprintf("%2.f евро это %.2f рублей\n", money, money/usdToeur*usdTorub)
-	case firstVal == eur && secondVal == usd:
-		result = fmt.Sprintf("%2.f евро это %.2f долларов\n", money, money/usdToeur)
-	case firstVal == eur && secondVal == eur:
-		result = fmt.Sprintf("%2.f евро это %.2f евро\n", money, money)
-	case firstVal == usd && secondVal == usd:
-		result = fmt.Sprintf("%2.f долларов это %.2f долларов\n", money, money)
-	case firstVal == rub && secondVal == rub:
-		result = fmt.Sprintf("%2.f рублей это %.2f рублей\n", money, money)
-	}
-	return result
-}
 func main() {
-	fmt.Println("__Калькулятор для перевода из евро в рубли__")
-	var money float64
-	var firstVal, secondVal, repeatVar string
-	for {
-		firstVal, money, secondVal = inputFunc()
-		fmt.Println(converter(firstVal, secondVal, money))
-		fmt.Println("Хотите повторить? (y/n)")
-		fmt.Scan(&repeatVar);
-		if repeatVar != "y" && repeatVar != "Y"{
-			break
-		}
+	if len(os.Args) < 4 {
+		fmt.Println("Использование: go run main.go <FROM> <TO> <AMOUNT>")
+		return
 	}
+
+	from := os.Args[1]
+	to := os.Args[2]
+	amountStr := os.Args[3]
+
+	amount, err := strconv.ParseFloat(amountStr, 64)
+	if err != nil {
+		fmt.Println("Ошибка: некорректная сумма.")
+		return
+	}
+
+	currencies := map[string]float64{
+		"USD": 1.0,
+		"EUR": 0.93,
+		"JPY": 151.67,
+		"GBP": 0.79,
+		"CNY": 7.25,
+	}
+
+	result, err := convert(from, to, amount, &currencies)
+	if err != nil {
+		fmt.Println("Ошибка:", err)
+		return
+	}
+
+	fmt.Printf("%.2f %s = %.2f %s\n", amount, from, result, to)
+}
+
+func convert(from, to string, amount float64, rates *map[string]float64) (float64, error) {
+	fromRate, ok := (*rates)[from]
+	if !ok {
+		return 0, fmt.Errorf("неизвестная валюта: %s", from)
+	}
+	toRate, ok := (*rates)[to]
+	if !ok {
+		return 0, fmt.Errorf("неизвестная валюта: %s", to)
+	}
+	usdAmount := amount / fromRate
+	return usdAmount * toRate, nil
 }
