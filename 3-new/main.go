@@ -1,22 +1,69 @@
 package main
 
-type Bin struct{
-	id string
-	private bool
-	createdAt string //дата и время
-	name string
-}
-type BinList struct{
-	Bin
-}
-func (Bin) createBin() Bin{
-	return Bin{
-		id: "",
-		private: true,
-		createdAt: "",
-		name: "",
+import (
+	"encoding/json"
+	"fmt"
+	"os"
+	"strconv"
+
+	"github.com/fatih/color"
+	"main.go/bins"
+	"main.go/file"
+	"main.go/storage"
+)
+
+func main() {
+	fmt.Println("Read bins")
+	fileName := promtData("Enter the file name")
+	_, err := os.Stat(fileName)
+	if os.IsNotExist(err) {
+		initial := bins.BinList{Bins: []bins.Bin{}}
+		data, _ := json.Marshal(initial)
+		file.WriteFile(data, fileName)
+
+	}
+
+	binList, err := bins.NewBinList(fileName)
+	if err != nil {
+		color.Red("Ошибка при загрузке списка: %v", err)
+		return
+	}
+
+	fmt.Println("1 - Create bin\n2 - Show bins")
+	var menu int
+	fmt.Scan(&menu)
+
+	switch menu {
+	case 1:
+		createBin(binList, fileName)
+	case 2:
+		data, err := file.ReadFile(fileName)
+		if err != nil {
+			color.Red("Ошибка при чтении файла: %v", err)
+		} else {
+			fmt.Println(string(data))
+		}
+	default:
+		color.Red("Неверный выбор")
 	}
 }
-func main(){
 
+func createBin(binList *bins.BinList, fileName string) {
+	id := promtData("Enter Id")
+	private, err := strconv.ParseBool(promtData("Enter private (true/false)"))
+	if err != nil {
+		color.Red("Cannot convert to bool")
+		return
+	}
+	name := promtData("Enter name")
+	bin := bins.CreateBin(id, name, private)
+	binList.Bins = append(binList.Bins, bin)
+	storage.Save(*binList, fileName)
+}
+
+func promtData(s string) string {
+	fmt.Print(s + ": ")
+	var str string
+	fmt.Scanln(&str)
+	return str
 }
