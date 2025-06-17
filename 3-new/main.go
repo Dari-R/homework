@@ -41,7 +41,7 @@ func main() {
 
 	switch menu {
 	case 1:
-		createBin(binList, fileName)
+		createBin(binList, fileName, storage)
 	case 2:
 		data, err := file.ReadFile(fileName)
 		if err != nil {
@@ -56,7 +56,7 @@ func main() {
 func runApp(s storage.Storage, api api.ApiClient) {
 	api.PrintKey()
 }
-func createBin(binList *bins.BinList, fileName string) {
+func createBin(binList *bins.BinList, fileName string, storage storage.Storage) {
 	id := promtData("Enter Id")
 	private, err := strconv.ParseBool(promtData("Enter private (true/false)"))
 	if err != nil {
@@ -66,8 +66,10 @@ func createBin(binList *bins.BinList, fileName string) {
 	name := promtData("Enter name")
 	bin := bins.CreateBin(id, name, private)
 	binList.Bins = append(binList.Bins, bin)
-
-	storage.NewStorage().Save(*binList, fileName)
+	err = storage.Save(*binList, fileName)
+		if err != nil {
+		color.Red("Ошибка при сохранении: %v", err)
+	}
 }
 
 func promtData(s string) string {
