@@ -7,12 +7,18 @@ import (
 	"strconv"
 
 	"github.com/fatih/color"
+	"main.go/api"
 	"main.go/bins"
+	"main.go/config"
 	"main.go/file"
 	"main.go/storage"
 )
 
 func main() {
+	cfg := config.NewConfig()
+	apiClient := api.NewApi(cfg)
+	storage := storage.NewStorage()
+	runApp(storage, apiClient)
 	fmt.Println("Read bins")
 	fileName := promtData("Enter the file name")
 	_, err := os.Stat(fileName)
@@ -47,7 +53,9 @@ func main() {
 		color.Red("Неверный выбор")
 	}
 }
-
+func runApp(s storage.Storage, api api.ApiClient) {
+	api.PrintKey()
+}
 func createBin(binList *bins.BinList, fileName string) {
 	id := promtData("Enter Id")
 	private, err := strconv.ParseBool(promtData("Enter private (true/false)"))
@@ -58,7 +66,8 @@ func createBin(binList *bins.BinList, fileName string) {
 	name := promtData("Enter name")
 	bin := bins.CreateBin(id, name, private)
 	binList.Bins = append(binList.Bins, bin)
-	storage.Save(*binList, fileName)
+
+	storage.NewStorage().Save(*binList, fileName)
 }
 
 func promtData(s string) string {
