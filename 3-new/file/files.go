@@ -10,7 +10,7 @@ import (
 
 func ReadFile(fileName string) ([]byte, error) {
 	if filepath.Ext(fileName) != ".json" {
-		return nil, errors.New("FILE MUSST BE IN JSON FORMAT")
+		return nil, errors.New("FILE MUST BE IN JSON FORMAT")
 	}
 	data, err := os.ReadFile(fileName)
 	if err != nil  {
@@ -26,14 +26,14 @@ func WriteFile(data []byte, fileName string) {
 		return
 	}
 	defer file.Close()
-	extention := filepath.Ext(fileName)
-	if extention == ".json" {
+	extension := filepath.Ext(fileName)
+	if extension == ".json" {
 		_, err = file.Write(data)
 		if err != nil {
 			color.Red("Could not write file")
 		}
 		color.Green("Done")
 	}else{
-		color.Red("File musst be in JSON format")
+		color.Red("File must be in JSON format")
 	}
 }
