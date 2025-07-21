@@ -6,25 +6,31 @@ import (
 	"main.go/bins"
 	"main.go/file"
 )
-type Storage interface{
-	Save(bins.BinList, string) error
-	Load(string) (bins.BinList, error)
+
+type storage1 struct {
+    filename string
 }
-type storage1 struct{}
-func NewStorage() Storage{
-	return &storage1{}
+
+type Storage interface {
+	Save(bins.BinList) error
+	Load() (bins.BinList, error)
 }
-func (s* storage1)Save(binList bins.BinList, fileName string) error {
+
+func NewStorage(fileName string) Storage {
+	return &storage1{filename: fileName}
+}
+
+func (s *storage1) Save(binList bins.BinList) error {
 	data, err := json.Marshal(binList)
 	if err != nil {
 		return err
 	}
-	file.WriteFile(data, fileName)
+	file.WriteFile(data, s.filename)
 	return nil
 }
 
-func (s * storage1)Load(fileName string) (bins.BinList, error) {
-	data, err := file.ReadFile(fileName)
+func (s *storage1) Load() (bins.BinList, error) {
+	data, err := file.ReadFile(s.filename)
 	if err != nil {
 		return bins.BinList{}, err
 	}
