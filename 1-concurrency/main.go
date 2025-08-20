@@ -6,15 +6,15 @@ import (
 )
 
 func main() {
-	ch1, ch2 := make(chan []int), make(chan int, 10)
+	ch1, ch2 := make(chan int, 10), make(chan int, 10)
 	go func() {
 		makeSlice(ch1)
+
 		close(ch1)
 	}()
 
 	go func() {
-		sl:=<-ch1
-		for _, s := range sl {
+		for s := range ch1 {
 			sqrtFunc(s, ch2)
 		}
 
@@ -27,13 +27,13 @@ func main() {
 
 }
 
-func makeSlice(ch chan []int) {
+func makeSlice(ch chan int) {
 	sl := make([]int, 10)
 	for i := 0; i < 10; i++ {
-		a := rand.Intn(100) + 1
+		a := rand.Intn(101)
 		sl[i] = a
+		ch <- sl[i]
 	}
-	ch <- sl
 }
 
 func sqrtFunc(res int, ch2 chan int) {
