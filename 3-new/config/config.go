@@ -19,6 +19,7 @@ func NewConfig() *Config {
 	if key == "" {
 		panic("Не передан параметр Key в переменную окружения")
 	}
+
 	return &Config{
 		Key: key,
 	}

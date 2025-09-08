@@ -4,13 +4,9 @@ import (
 	"flag"
 	"fmt"
 	"os"
-	"strconv"
 
-	"github.com/fatih/color"
 	"main.go/api"
-	"main.go/bins"
 	"main.go/config"
-	"main.go/storage"
 )
 
 func main() {
@@ -25,13 +21,14 @@ func main() {
 	name := flag.String("name", "", "Bin name")
 
 	flag.Parse()
+	fmt.Println(*name)
 	cfg := config.NewConfig()
 	apiClient := api.NewApi(cfg)
 	switch {
 	case *create:
 		apiClient.Create(*file, *name)
 	case *update:
-		apiClient.Update(*id, *file)
+		apiClient.Update(*id, *name)
 	case *deleteFlag:
 		apiClient.Delete(*id)
 	case *get:
@@ -45,25 +42,27 @@ func main() {
 	}
 }
 
-func createBin(binList *bins.BinList, fileName string, storage storage.Storage) {
-	id := promtData("Enter Id")
-	private, err := strconv.ParseBool(promtData("Enter private (true/false)"))
-	if err != nil {
-		color.Red("Cannot convert to bool")
-		return
-	}
-	name := promtData("Enter name")
-	bin := bins.CreateBin(id, name, private)
-	binList.Bins = append(binList.Bins, bin)
-	err = storage.Save(*binList)
-	if err != nil {
-		color.Red("Ошибка при сохранении: %v", err)
-	}
-}
+// func promtData(s string) string {
+// 	fmt.Print(s + ": ")
+// 	var str string
+// 	fmt.Scanln(&str)
+// 	return str
+// }
 
-func promtData(s string) string {
-	fmt.Print(s + ": ")
-	var str string
-	fmt.Scanln(&str)
-	return str
-}
+
+
+// func createBin(binList *bins.BinList, fileName string, storage storage.Storage) {
+// 	id := promtData("Enter Id")
+// 	private, err := strconv.ParseBool(promtData("Enter private (true/false)"))
+// 	if err != nil {
+// 		color.Red("Cannot convert to bool")
+// 		return
+// 	}
+// 	name := promtData("Enter name")
+// 	bin := bins.CreateBin(id, name, private)
+// 	binList.Bins = append(binList.Bins, bin)
+// 	err = storage.Save(*binList)
+// 	if err != nil {
+// 		color.Red("Ошибка при сохранении: %v", err)
+// 	}
+// }
