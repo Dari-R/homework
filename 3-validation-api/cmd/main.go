@@ -2,7 +2,7 @@ package main
 
 import (
 	configs "3-validation-api/config"
-	"3-validation-api/internal/email"
+	verify "3-validation-api/internal/email"
 	"fmt"
 	"net/http"
 )
@@ -10,11 +10,15 @@ import (
 func main() {
 	conf := configs.LoadConfig()
 	router := http.NewServeMux()
-	email.NewEmailHandler(router, email.EmailHandlerDeps{Config: conf})
+
+	// Подключаем verify-модуль
+	verify.NewVerifyHandler(router, conf)
+
 	server := http.Server{
 		Addr:    ":8082",
 		Handler: router,
 	}
+
 	fmt.Println("Server is listening on port 8082")
 	server.ListenAndServe()
 }

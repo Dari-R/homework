@@ -1,75 +1,92 @@
-package email
+package verify
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 	"net/smtp"
-
-	configs "3-validation-api/config"
+	"strings"
 
 	"github.com/jordan-wright/email"
+	configs "3-validation-api/config"
 )
 
-type EmailHandlerDeps struct {
+type VerifyHandler struct {
 	*configs.Config
+	hashes map[string]bool
 }
 
-type EmailHandler struct {
-	*configs.Config
-}
-
-func NewEmailHandler(router *http.ServeMux, deps EmailHandlerDeps) {
-	handler := &EmailHandler{
-		Config: deps.Config,
+// Конструктор VerifyHandler
+func NewVerifyHandler(router *http.ServeMux, cfg *configs.Config) {
+	handler := &VerifyHandler{
+		Config: cfg,
+		hashes: make(map[string]bool),
 	}
-	router.HandleFunc("POST /send", handler.Send())
-	router.HandleFunc("GET /verify/{hash}", handler.Verify())
+
+	// Регистрация маршрутов
+	router.HandleFunc("/send", handler.Send())
+	router.HandleFunc("/verify/", handler.Verify()) // для hash
 }
 
-func (handler EmailHandler) Send() http.HandlerFunc {
+// POST /send
+func (handler *VerifyHandler) Send() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodPost {
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 			return
 		}
 
-		e := email.NewEmail()
-		e.From = "Jordan Wright <test@gmail.com>"
-		e.To = []string{"test@example.com"}
-		e.Bcc = []string{"test_bcc@example.com"}
-		e.Cc = []string{"test_cc@example.com"}
-		e.Subject = "Awesome Subject"
-		e.Text = []byte("Text Body is, of course, supported!")
-		e.HTML = []byte("<h1>Fancy HTML is supported, too!</h1>")
+		// Для демонстрации email можно захардкодить или брать из body запроса
+		to := "user@example.com"
 
-		// Отправка письма через SMTP с проверкой ошибки
-		err := e.Send("smtp.gmail.com:587", smtp.PlainAuth("", "test@gmail.com", "password123", "smtp.gmail.com"))
-		if err != nil {
-			http.Error(w, "Failed to send email: "+err.Error(), http.StatusInternalServerError)
+		// Генерация hash
+		hash := "abc123"
+		handler.hashes[hash] = false
+
+		verifyLink := fmt.Sprintf("http://localhost:8080/verify/%s", hash)
+
+		e := email.NewEmail()
+		e.From = fmt.Sprintf("App <%s>", handler.Email)
+		e.To = []string{to}
+		e.Subject = "Подтверждение Email"
+		e.Text = []byte("Нажмите для подтверждения: " + verifyLink)
+		e.HTML = []byte(fmt.Sprintf("<h1>Подтвердите email: <a href='%s'>%s</a></h1>", verifyLink, verifyLink))
+
+		auth := smtp.PlainAuth("", handler.Email, handler.Password, strings.Split(handler.Address, ":")[0])
+
+		if err := e.Send(handler.Address, auth); err != nil {
+			log.Printf("Ошибка при отправке email: %v", err)
+			http.Error(w, "Не удалось отправить письмо", http.StatusInternalServerError)
 			return
 		}
 
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("Email sent successfully"))
+		w.Write([]byte("Письмо с подтверждением отправлено"))
 	}
 }
 
-func (handler EmailHandler) Verify() http.HandlerFunc {
+// GET /verify/{hash}
+func (handler *VerifyHandler) Verify() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodGet {
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 			return
 		}
 
-		// Получаем hash из URL: /verify/abc123
-		hash := req.URL.Path[len("/verify/"):]
+		hash := strings.TrimPrefix(req.URL.Path, "/verify/")
 		if hash == "" {
 			http.Error(w, "Hash not provided", http.StatusBadRequest)
 			return
 		}
 
-		// В реальном проекте здесь проверка hash в базе или кеше
+		_, ok := handler.hashes[hash]
+		if !ok {
+			http.Error(w, "Invalid verification link", http.StatusBadRequest)
+			return
+		}
+
+		handler.hashes[hash] = true
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(fmt.Sprintf("Email verified with hash: %s", hash)))
+		w.Write([]byte(fmt.Sprintf("Email подтверждён с hash: %s", hash)))
 	}
 }
