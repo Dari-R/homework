@@ -10,7 +10,7 @@ type Product struct {
 	Name        string
 	Age         int
 	Description string
-	Images      []string `gorm:"type:text[]"`
+	Images      pq.StringArray `gorm:"type:text[]"`
 }
 
 func NewLink(name string, age int, description string, image pq.StringArray) *Product {
@@ -18,7 +18,7 @@ func NewLink(name string, age int, description string, image pq.StringArray) *Pr
 		Name:        name,
 		Age:         age,
 		Description: description,
-		Images:      image,
+		Images:       pq.StringArray(image),
 	}
 }
 
