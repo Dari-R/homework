@@ -1,26 +1,63 @@
 package verify
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"net/smtp"
+	"os"
 	"strings"
 
-	"github.com/jordan-wright/email"
 	configs "3-validation-api/config"
+	"3-validation-api/pkg/res"
+
+	"github.com/jordan-wright/email"
 )
 
 type VerifyHandler struct {
 	*configs.Config
-	hashes map[string]bool
+	storageFile string
+}
+
+type Storage struct {
+	Hashes map[string]string `json:"hashes"`
+}
+
+// Загрузка данных из файла
+func (handler *VerifyHandler) loadStorage() (*Storage, error) {
+	data, err := os.ReadFile(handler.storageFile)
+	if os.IsNotExist(err) {
+		return &Storage{Hashes: make(map[string]string)}, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+
+	var storage Storage
+	if err := json.Unmarshal(data, &storage); err != nil {
+		return nil, err
+	}
+	if storage.Hashes == nil {
+		storage.Hashes = make(map[string]string)
+	}
+	return &storage, nil
+}
+
+// Сохранение данных в файл
+func (handler *VerifyHandler) saveStorage(storage *Storage) error {
+	data, err := json.MarshalIndent(storage, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(handler.storageFile, data, 0644)
 }
 
 // Конструктор VerifyHandler
 func NewVerifyHandler(router *http.ServeMux, cfg *configs.Config) {
 	handler := &VerifyHandler{
-		Config: cfg,
-		hashes: make(map[string]bool),
+		Config:      cfg,
+		storageFile: "storage.json",
 	}
 
 	// Регистрация маршрутов
@@ -28,22 +65,46 @@ func NewVerifyHandler(router *http.ServeMux, cfg *configs.Config) {
 	router.HandleFunc("/verify/", handler.Verify()) // для hash
 }
 
-// POST /send
+type Request struct {
+	Email string `json:"email"`
+}
+
 func (handler *VerifyHandler) Send() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 		if req.Method != http.MethodPost {
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 			return
 		}
+		var body Request
+		if err := json.NewDecoder(req.Body).Decode(&body); err != nil {
+			http.Error(w, "Invalid JSON", http.StatusBadRequest)
+			return
+		}
+		to := body.Email
+		fmt.Println(to)
 
-		// Для демонстрации email можно захардкодить или брать из body запроса
-		to := "user@example.com"
+		if len(to) == 0 {
+			http.Error(w, "Email is required", http.StatusBadRequest)
+			return
+		}
 
-		// Генерация hash
-		hash := "abc123"
-		handler.hashes[hash] = false
+		defer req.Body.Close()
 
-		verifyLink := fmt.Sprintf("http://localhost:8080/verify/%s", hash)
+		hash := res.GenerateRandomHash(16)
+
+		storage, err := handler.loadStorage()
+		if err != nil {
+			http.Error(w, "Storage error", http.StatusInternalServerError)
+			return
+		}
+
+		storage.Hashes[hash] = to
+		if err := handler.saveStorage(storage); err != nil {
+			http.Error(w, "Save error", http.StatusInternalServerError)
+			return
+		}
+
+		verifyLink := fmt.Sprintf("http://localhost:8082/verify/%s", hash)
 
 		e := email.NewEmail()
 		e.From = fmt.Sprintf("App <%s>", handler.Email)
@@ -65,10 +126,9 @@ func (handler *VerifyHandler) Send() http.HandlerFunc {
 	}
 }
 
-// GET /verify/{hash}
 func (handler *VerifyHandler) Verify() http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
-		if req.Method != http.MethodGet {
+		if req.Method != http.MethodGet{
 			http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
 			return
 		}
@@ -79,14 +139,21 @@ func (handler *VerifyHandler) Verify() http.HandlerFunc {
 			return
 		}
 
-		_, ok := handler.hashes[hash]
-		if !ok {
-			http.Error(w, "Invalid verification link", http.StatusBadRequest)
-			return
-		}
+        // Загружаем storage
+        storage, err := handler.loadStorage()
+        if err != nil {
+            http.Error(w, "Storage error", http.StatusInternalServerError)
+            return
+        }
 
-		handler.hashes[hash] = true
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(fmt.Sprintf("Email подтверждён с hash: %s", hash)))
-	}
+        email, exists := storage.Hashes[hash]
+        verified := exists && email != ""
+        if exists {
+            delete(storage.Hashes, hash)
+            handler.saveStorage(storage) 
+        }
+
+        w.Header().Set("Content-Type", "application/json")
+        json.NewEncoder(w).Encode(map[string]bool{"verified": verified})
+    }
 }
