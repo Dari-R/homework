@@ -23,7 +23,7 @@ func NewProductHandler(router *http.ServeMux, deps ProductHandlerDeps) {
 	}
 	router.HandleFunc("POST /product", handler.Create())
 	router.HandleFunc("PATCH /product/{id}", handler.Update())
-	router.HandleFunc("GET /{hash}", handler.GoTo())
+	router.HandleFunc("GET /{id}", handler.GetById())
 	router.HandleFunc("DELETE /product/{id}", handler.Delete())
 }
 
@@ -79,15 +79,21 @@ func (handler *ProductHandler) Update() http.HandlerFunc {
 	}
 }
 
-func (handler *ProductHandler) GoTo() http.HandlerFunc {
+func (handler *ProductHandler) GetById() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		hash := r.PathValue("hash")
-		product, err := handler.ProductRepository.GetByHash(hash)
+		idString := r.PathValue("id")
+		id, err := strconv.ParseUint(idString, 10, 32)
+		if err!= nil{
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		product, err := handler.ProductRepository.GetById(uint(id))
 		if err != nil {
 			http.Error(w, err.Error(), http.StatusNotFound)
 			return
 		}
-		http.Redirect(w, r, product.Name, http.StatusTemporaryRedirect)
+		res.Json(w, product, http.StatusOK)
 	}
 }
 func (handler *ProductHandler) Delete() http.HandlerFunc {
