@@ -10,8 +10,8 @@ type ProductCreateRequest struct {
 }
 
 type ProductUpdateRequest struct {
-	Name        string         `json:"name" validate:"required,name"`
-	Age         int            `json:"age" validate:"required,age"`
+	Name        string         `json:"name" validate:"required"`
+	Age         int            `json:"age" validate:"required"`
 	Description string         `json:"description"`
 	Images      pq.StringArray `json:"image"`
 	Hash        string         `json:"hash"`
