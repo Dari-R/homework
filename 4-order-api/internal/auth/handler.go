@@ -42,7 +42,6 @@ func (handler *AuthHandler) InitiateAuth() http.HandlerFunc {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-
 		data := InitiateAuthResponse{
 			SessionID: sessionID,
 		}
