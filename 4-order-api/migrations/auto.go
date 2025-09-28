@@ -2,6 +2,7 @@ package main
 
 import (
 	"4-order-api/internal/model"
+	"4-order-api/internal/order"
 	"4-order-api/internal/session"
 	"4-order-api/internal/user"
 	"math/rand"
@@ -24,5 +25,5 @@ func main() {
 	}
 	rand.Seed(time.Now().UnixNano())
 
-	db.AutoMigrate(&model.Product{}, &user.User{}, &session.Session{})
+	db.AutoMigrate(&model.Product{}, &user.User{}, &session.Session{}, &order.Order{}, &order.OrderProduct{})
 }

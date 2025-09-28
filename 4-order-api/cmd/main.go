@@ -2,9 +2,10 @@
 package main
 
 import (
-	"4-order-api/internal/auth"
 	configs "4-order-api/config"
+	"4-order-api/internal/auth"
 	"4-order-api/internal/model"
+	"4-order-api/internal/order"
 	"4-order-api/internal/session"
 	"4-order-api/internal/user"
 	"4-order-api/middleware"
@@ -26,14 +27,20 @@ func main() {
 	// Инициализация сервисов
 	smsService := sms.NewSMSService()
 	authService := auth.NewAuthService(userRepository, sessionRepository, smsService)
-
-	// Регистрация хендлеров
 	productRepository := model.NewProductRepository(db)
+	orderRepository := order.NewOrderRepository(db)
+
 	model.NewProductHandler(router, model.ProductHandlerDeps{ProductRepository: productRepository})
 
 	auth.NewAuthHandler(router, auth.AuthHandlerDeps{
 		Config:      conf,
 		AuthService: authService,
+	})
+
+	order.NewOrderHandler(router, order.OrderHandlerDeps{
+		OrderRepository:   orderRepository,
+		UserRepository:    userRepository,
+		ProductRepository: productRepository,
 	})
 
 	// Middleware chain
