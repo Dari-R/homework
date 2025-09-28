@@ -2,7 +2,11 @@ package main
 
 import (
 	"4-order-api/internal/model"
+	"4-order-api/internal/session"
+	"4-order-api/internal/user"
+	"math/rand"
 	"os"
+	"time"
 
 	"github.com/joho/godotenv"
 	"gorm.io/driver/postgres"
@@ -18,6 +22,7 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	rand.Seed(time.Now().UnixNano())
 
-	db.AutoMigrate(&model.Product{})
+	db.AutoMigrate(&model.Product{}, &user.User{}, &session.Session{})
 }
