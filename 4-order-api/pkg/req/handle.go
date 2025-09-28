@@ -1,4 +1,4 @@
-package reque
+package req
 
 import (
 	"4-order-api/pkg/res"

@@ -1,7 +1,7 @@
 package model
 
 import (
-	req "4-order-api/pkg/req"
+	"4-order-api/pkg/req"
 	"4-order-api/pkg/res"
 	"net/http"
 	"strconv"
@@ -23,7 +23,7 @@ func NewProductHandler(router *http.ServeMux, deps ProductHandlerDeps) {
 	}
 	router.HandleFunc("POST /product", handler.Create())
 	router.HandleFunc("PATCH /product/{id}", handler.Update())
-	router.HandleFunc("GET /{id}", handler.GetById())
+	router.HandleFunc("GET /product/{id}", handler.GetById())
 	router.HandleFunc("DELETE /product/{id}", handler.Delete())
 }
 
